@@ -1,0 +1,140 @@
+#
+# Copyright 2016 Red Hat, Inc.
+#
+# Red Hat licenses this file to you under the Apache License, version
+# 2.0 (the "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.  See the License for the specific language governing
+# permissions and limitations under the License.
+#
+
+# Default profiles delivered with f-m-p
+
+# tag::default[]
+# Default profile which is always activated
+- name: default
+  enricher:
+    # The order given in "includes" is the order in which enrichers are called
+    includes:
+    - fmp-metadata
+    - fmp-name
+    - fmp-controller
+    - fmp-controller-from-configuration
+    - fmp-service
+    - fmp-image
+    - fmp-portname
+    - fmp-project
+    - fmp-dependency
+    - fmp-pod-annotations
+    - fmp-git
+    - fmp-maven-scm
+    - fmp-serviceaccount
+    - fmp-maven-issue-mgmt
+    # TODO: Documents and verify enrichers below
+    - fmp-debug
+    - fmp-remove-build-annotations
+    - fmp-volume-permission
+    - fmp-configmap-file
+    - fmp-secret-file
+
+    # Route exposure
+    - fmp-openshift-service-expose
+    - fmp-openshift-route
+    - fmp-openshift-deploymentconfig
+
+    # -----------------------------------------
+    # TODO: Document and verify enrichers below
+    # Health checks
+    - f8-healthcheck-spring-boot
+    - f8-healthcheck-wildfly-swarm
+    - f8-healthcheck-thorntail-v2
+    - f8-healthcheck-karaf
+    - f8-healthcheck-vertx
+    - f8-healthcheck-docker
+    - f8-healthcheck-webapp
+    - f8-prometheus
+    # Dependencies shouldn't be enriched anymore, therefor it's last in the list
+    - fmp-dependency
+    - fmp-revision-history
+    - fmp-docker-registry-secret
+    - fmp-triggers-annotation
+
+  generator:
+    # The order given in "includes" is the order in which generators are called
+    includes:
+    - spring-boot
+    - wildfly-swarm
+    - thorntail-v2
+    - karaf
+    - vertx
+    - java-exec
+    - webapp
+  watcher:
+    includes:
+    - spring-boot
+    - docker-image
+# end::default[]
+# No enrichment at all
+- name: raw
+  enricher:
+    includes: []
+# No defaults added, useful for explicit configuration
+- name: explicit
+  enricher:
+    excludes:
+    - fmp-image
+    - fmp-controller
+    - fmp-service
+# Only deployment & service
+- name: minimal
+  generator:
+    # The order given in "includes" is the order in which generators are called
+    includes:
+    - spring-boot
+    - wildfly-swarm
+    - thorntail-v2
+    - karaf
+    - vertx
+    - java-exec
+    - webapp
+  enricher:
+    includes:
+    - fmp-name
+    - fmp-controller
+    - fmp-service
+    - fmp-image
+    - fmp-project
+    - fmp-debug
+  # Only dependencies, no build, use other resources raw
+- name: aggregate
+  generator:
+    includes: []
+  enricher:
+    includes:
+    - fmp-dependency
+# Use only the Spring Boot generator
+- name: spring-boot
+  generator:
+    includes:
+      - spring-boot
+# does not expose services by default
+- name: internal-microservice
+  extends: default
+  generator:
+    excludes: []
+  enricher:
+    excludes:
+      - fmp-openshift-service-expose
+# Includes everything from 'default', plus enrichers/generators
+# only useful to OpenShift.io
+- name: osio
+  extends: default
+  enricher:
+    includes:
+    - osio-space-label
